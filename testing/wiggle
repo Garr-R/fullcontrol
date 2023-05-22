@@ -1,0 +1,88 @@
+import fullcontrol as fc
+from math import tau, sin
+
+# Custom printer/gcode parameters for PLA wiggle test on Ultra One Rev.0 and Rev.1
+# Primer "xy" doesn't work for some reason on the Ultra One, using "front_lines_then_y" instead
+print_settings = {
+    'primer': 'front_lines_then_y',
+    'extrusion_width': 0.6,
+    'extrusion_height': 0.2, 
+    'print_speed': 1000,
+    'nozzle_temp': 215, 
+    'bed_temp': 60, 
+    'fan_percent': 100}
+
+printer='t0_ultra_one' # generic / ultimaker2plus / prusa_i3 / ender_3 / cr_10 / bambulab_x1 / toolchanger_T0
+filename = 'wiggle_test' # filename without extension
+
+# design parameters
+Xaxis_movement = 20.0
+Yaxis_movement = 0.6
+#Yaxis_movement = 0.48
+
+# increase the increment every (maybe every other) loop..?
+Yaxis_movement_increment = 0.1 # was 0.006
+Zaxis_movement = 0.01 # absolute position is Z:{% set zpos = parameters.wiggleHeight %}
+
+# Used in the original (javascript) wiggle script:
+#{% set xpos = parameters.wiggleX %}
+#{% set ypos = parameters.wiggleY %}
+#{% set zpos = parameters.wiggleHeight %}
+
+# total number of loops (22 zig-zag lines)
+zig_zag_lines = 11
+
+# Ultra One center starting position
+Xaxis_pos = 203
+Yaxis_pos = 177
+Zaxis_pos = 0.2
+
+steps = []
+# wiggle starting position
+steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos, color=[0, 1, 0]))
+
+# test absolute coords
+#steps.append(fc.PrinterCommand(id='relative_coords'))
+print('test')
+
+for x in range(zig_zag_lines):
+    #This may no longer be needed - extruder might already be on from the starting/priming scripts
+    steps.append(fc.Extruder(on=True))
+    print('Xaxis_pos ', Xaxis_pos)
+    print('Yaxis_pos ', Yaxis_pos)
+
+    # Increment the Xaxis position
+    Xaxis_pos = Xaxis_pos + Xaxis_movement
+    print('new Xaxis_pos: ', Xaxis_pos)
+
+    # Move 1
+    steps.append(fc.Point(x=Xaxis_pos))
+
+    # Increment the Yaxis position
+    Yaxis_pos = Yaxis_pos + Yaxis_movement
+    print('new Yaxis_pos: ', Yaxis_pos)
+
+    # Move 2
+    steps.append(fc.Point(y=Yaxis_pos, color=[1, 0, 0]))
+
+    # Increment the Xaxis position
+    Xaxis_pos = Xaxis_pos - Xaxis_movement
+    print('new Xaxis_pos: ', Xaxis_pos)
+
+    # Move 3
+    steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos))
+    print("loop: ", x)
+
+    # Increment the Yaxis position
+    Yaxis_pos = Yaxis_pos + Yaxis_movement
+    print('new Yaxis_pos: ', Yaxis_pos)
+
+    # Move 4
+    steps.append(fc.Point(y=Yaxis_pos, color=[0, 0, 1]))
+
+# generate the gcode
+fc.transform(steps, 'gcode', fc.GcodeControls(printer_name=printer, save_as=filename, initialization_data=print_settings))
+
+# plot the steps
+#fc.transform(steps, 'plot', fc.PlotControls(color_type='manual', zoom=4))
+    
