@@ -60,7 +60,7 @@ def set_up(user_overrides: dict):
     starting_procedure_steps.append(ManualGcode(
         text='M220 S' + str(initialization_data["print_speed_percent"])+' ; set speed factor override percentage'))
     starting_procedure_steps.append(ManualGcode(
-        text='M221 S' + str(initialization_data["material_flow_percent"])+' ; set extrude factor override percentage'))
+        text='M221 D0 S' + str(initialization_data["material_flow_percent"])+' ; set extrude factor override percentage')) # D0 is for Tool_0
     #starting_procedure_steps.append(Extruder(on=False))
 
     # wiggle starting position
