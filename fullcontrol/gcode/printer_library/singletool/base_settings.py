@@ -10,7 +10,7 @@ default_initial_settings = {
     "print_speed_percent": 100,
     "material_flow_percent": 100,
     "e_units": "mm",
-    "relative_e": True,
+    "relative_e": False,
     "dia_feed": 1.75,
     "primer": "front_lines_then_y",
     "printer_command_list": {

@@ -2,22 +2,27 @@ import fullcontrol as fc
 from math import tau, sin
 
 # Custom printer/gcode parameters for PLA wiggle test on Ultra One Rev.0 and Rev.1
-# Primer "xy" doesn't work for some reason on the Ultra One, using "front_lines_then_y" instead
+# Primer "xy" doesn't work for some reason on the Ultra One, using "front_lines_then_xy" instead
 print_settings = {
-    'primer': 'front_lines_then_y',
+    'primer': 'front_lines_then_xy',
     'extrusion_width': 0.6,
-    'extrusion_height': 0.2, 
-    'print_speed': 1000,
-    'nozzle_temp': 215, 
-    'bed_temp': 60, 
-    'fan_percent': 100}
+    'extrusion_height': 0.2,
+    'print_speed': 2000,
+    'nozzle_temp': 215,
+    'bed_temp': 60,
+    'fan_percent': 100,
+    'travel_speed': 18000,
+    'print_speed_percent': 100,
+    'material_flow_percent': 100,
+    'e_units': 'mm',
+    'relative_e': False}
 
 printer='t0_ultra_one' # generic / ultimaker2plus / prusa_i3 / ender_3 / cr_10 / bambulab_x1 / toolchanger_T0
-filename = 'wiggle_test' # filename without extension
+filename = 'newest_fixed_wiggle_test' # filename without extension
 
 # design parameters
 Xaxis_movement = 20.0
-Yaxis_movement = 0.6
+Yaxis_movement = 1
 #Yaxis_movement = 0.48
 
 # increase the increment every (maybe every other) loop..?
@@ -35,25 +40,23 @@ zig_zag_lines = 11
 # Ultra One center starting position
 Xaxis_pos = 203
 Yaxis_pos = 177
-Zaxis_pos = 0.2
+Zaxis_pos = 0.3
 
 steps = []
 # wiggle starting position
 steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos, color=[0, 1, 0]))
 
-# test absolute coords
+# Enable the extruder
+steps.append(fc.Extruder(on=True))
+
+# test relative coords
 #steps.append(fc.PrinterCommand(id='relative_coords'))
-print('test')
 
 for x in range(zig_zag_lines):
-    #This may no longer be needed - extruder might already be on from the starting/priming scripts
-    steps.append(fc.Extruder(on=True))
-    print('Xaxis_pos ', Xaxis_pos)
-    print('Yaxis_pos ', Yaxis_pos)
-
     # Increment the Xaxis position
     Xaxis_pos = Xaxis_pos + Xaxis_movement
     print('new Xaxis_pos: ', Xaxis_pos)
+
 
     # Move 1
     steps.append(fc.Point(x=Xaxis_pos))
@@ -62,12 +65,16 @@ for x in range(zig_zag_lines):
     Yaxis_pos = Yaxis_pos + Yaxis_movement
     print('new Yaxis_pos: ', Yaxis_pos)
 
+
+
     # Move 2
     steps.append(fc.Point(y=Yaxis_pos, color=[1, 0, 0]))
 
     # Increment the Xaxis position
     Xaxis_pos = Xaxis_pos - Xaxis_movement
     print('new Xaxis_pos: ', Xaxis_pos)
+
+
 
     # Move 3
     steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos))
@@ -76,6 +83,8 @@ for x in range(zig_zag_lines):
     # Increment the Yaxis position
     Yaxis_pos = Yaxis_pos + Yaxis_movement
     print('new Yaxis_pos: ', Yaxis_pos)
+
+
 
     # Move 4
     steps.append(fc.Point(y=Yaxis_pos, color=[0, 0, 1]))

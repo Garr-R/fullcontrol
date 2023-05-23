@@ -12,7 +12,6 @@ def set_up(user_overrides: dict):
     initialization_data = {**base_settings.default_initial_settings, **printer_overrides}
     initialization_data = {**initialization_data, **user_overrides}
 
-    # TODO: update starting scripts
     starting_procedure_steps = []
     starting_procedure_steps.append(ManualGcode(
         text='; Time to print!!!!!\n; GCode created with FullControl - tell us what you\'re printing!\n; info@fullcontrol.xyz or tag FullControlXYZ on Twitter/Instagram/LinkedIn/Reddit/TikTok \n'))
@@ -24,12 +23,15 @@ def set_up(user_overrides: dict):
     #starting_procedure_steps.append(Buildplate(temp=initialization_data["bed_temp"], wait=True))
     #starting_procedure_steps.append(Hotend(temp=initialization_data["nozzle_temp"], wait=True))
 
-    # Manually set Ultra One Rev.0 bed temperature
+    # Manually set Ultra One Rev.0 / Rev.1 bed temperature
     starting_procedure_steps.append(ManualGcode (text='M140 P0 S' + str(initialization_data["bed_temp"])))
     starting_procedure_steps.append(ManualGcode (text='M140 P1 S' + str(initialization_data["bed_temp"])))
     starting_procedure_steps.append(ManualGcode (text='M140 P2 S' + str(initialization_data["bed_temp"])))
     starting_procedure_steps.append(ManualGcode (text='M140 P3 S' + str(initialization_data["bed_temp"])))
     
+    # Wait for bed temperature to reach target temperature
+    starting_procedure_steps.append(ManualGcode (text='M190 P0 S' + str(initialization_data["bed_temp"])))
+
     # Home all axes 
     starting_procedure_steps.append(PrinterCommand(id='home')) #good
     #starting_procedure_steps.append(ManualGcode (text='G28 XY'))
@@ -40,10 +42,6 @@ def set_up(user_overrides: dict):
 
     # Ultra One doesn't use relative extrusion - commented out
     #starting_procedure_steps.append(Extruder(relative_gcode=initialization_data["relative_e"]))
-
-    # Not sure if this command works - commented out
-    #starting_procedure_steps.append(Fan(speed_percent=initialization_data["fan_percent"]))
-
 
     # Enable Tool 0 fan 
     starting_procedure_steps.append(ManualGcode(text='M106 P0 S255 ; turn on tool_0 part cooling fan'))    
@@ -59,7 +57,6 @@ def set_up(user_overrides: dict):
     #starting_procedure_steps.append(ManualGcode (text='M104 P1 S' + str(initialization_data["nozzle_temp"])))
     #starting_procedure_steps.append(ManualGcode (text='M109 P1 S' + str(initialization_data["nozzle_temp"])))
 
-
     starting_procedure_steps.append(ManualGcode(
         text='M220 S' + str(initialization_data["print_speed_percent"])+' ; set speed factor override percentage'))
     starting_procedure_steps.append(ManualGcode(
@@ -69,17 +66,16 @@ def set_up(user_overrides: dict):
     # wiggle starting position
     #starting_procedure_steps.append(Point(x=203, y=127, z=10))
     
-    # How much filament extrudes here? (answer: 50mm)
-    # starting_procedure_steps.append(StationaryExtrusion(volume=50, speed=250))
     starting_procedure_steps.append(Printer(travel_speed=200))
-    
-
-    #starting_procedure_steps.append(Point(z=50))
     starting_procedure_steps.append(Printer(travel_speed=initialization_data["travel_speed"]))
+    
+    # Disable software endstops
+    starting_procedure_steps.append(ManualGcode (text='G92 E0'))
+    starting_procedure_steps.append(ManualGcode (text='M564 S0')) 
     starting_procedure_steps.append(Point(x=25.0, y=25.0, z=0.3))
 
     #turn on for the purge script
-    starting_procedure_steps.append(Extruder(on=True))
+    starting_procedure_steps.append(Extruder(on=True))    
 
     starting_procedure_steps.append(ManualGcode(text=';-----\n; END OF STARTING PROCEDURE\n;-----\n'))
 
