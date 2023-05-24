@@ -7,7 +7,15 @@ def set_up(user_overrides: dict):
     '''
 
     # overrides for this specific printer relative those defined in base_settings.py
-    printer_overrides = {}
+    printer_overrides = {
+        'primer': 'front_lines_then_xy',
+        # 0.6mm Extrusion Width for 0.50mm nozzle, 0.42mm for 0.35mm nozzle, 0.3mm for 0.25mm nozzle, 0.84 for 0.75mm nozzle
+        'extrusion_width': 0.6,
+        'print_speed': 1000,
+        'nozzle_temp': 215,
+        'bed_temp': 60,
+        'travel_speed': 18000
+    }
     # update default initialization settings with printer-specific overrides and user-defined overrides
     initialization_data = {**base_settings.default_initial_settings, **printer_overrides}
     initialization_data = {**initialization_data, **user_overrides}
@@ -17,11 +25,6 @@ def set_up(user_overrides: dict):
         text='; Time to print!!!!!\n; GCode created with FullControl - tell us what you\'re printing!\n; info@fullcontrol.xyz or tag FullControlXYZ on Twitter/Instagram/LinkedIn/Reddit/TikTok \n'))
     starting_procedure_steps.append(ManualGcode(text=';-----\n; START OF STARTING PROCEDURE\n;-----\n'))
     starting_procedure_steps.append(ManualGcode(text='M106 P2 S255 ; turn on exhaust fan'))
-
-    #starting_procedure_steps.append(Buildplate(temp=initialization_data["bed_temp"], wait=False)) 
-    #starting_procedure_steps.append(Hotend(temp=initialization_data["nozzle_temp"], wait=False))
-    #starting_procedure_steps.append(Buildplate(temp=initialization_data["bed_temp"], wait=True))
-    #starting_procedure_steps.append(Hotend(temp=initialization_data["nozzle_temp"], wait=True))
 
     # Manually set Ultra One Rev.0 / Rev.1 bed temperature
     starting_procedure_steps.append(ManualGcode (text='M140 P0 S' + str(initialization_data["bed_temp"])))
@@ -71,7 +74,9 @@ def set_up(user_overrides: dict):
     
     # Disable software endstops
     starting_procedure_steps.append(ManualGcode (text='G92 E0'))
-    starting_procedure_steps.append(ManualGcode (text='M564 S0')) 
+    starting_procedure_steps.append(ManualGcode (text='M564 S0'))
+
+    # Move? but why? 
     starting_procedure_steps.append(Point(x=25.0, y=25.0, z=0.3))
 
     #turn on for the purge script
