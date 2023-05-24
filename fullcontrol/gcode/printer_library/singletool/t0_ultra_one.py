@@ -1,15 +1,11 @@
 from fullcontrol.gcode import Point, Printer, Extruder, ManualGcode, PrinterCommand, GcodeComment, Buildplate, Hotend, Fan, StationaryExtrusion
 import fullcontrol.gcode.printer_library.singletool.base_settings as base_settings
 
-
 def set_up(user_overrides: dict):
-    ''' DO THIS
-    '''
-
     # overrides for this specific printer relative those defined in base_settings.py
     printer_overrides = {
         'primer': 'front_lines_then_xy',
-        # 0.6mm Extrusion Width for 0.50mm nozzle, 0.42mm for 0.35mm nozzle, 0.3mm for 0.25mm nozzle, 0.84 for 0.75mm nozzle
+        # 0.6mm is the default Extrusion Width for the 0.50mm nozzle
         'extrusion_width': 0.6,
         'print_speed': 1000,
         'nozzle_temp': 215,
@@ -21,8 +17,6 @@ def set_up(user_overrides: dict):
     initialization_data = {**initialization_data, **user_overrides}
 
     starting_procedure_steps = []
-    starting_procedure_steps.append(ManualGcode(
-        text='; Time to print!!!!!\n; GCode created with FullControl - tell us what you\'re printing!\n; info@fullcontrol.xyz or tag FullControlXYZ on Twitter/Instagram/LinkedIn/Reddit/TikTok \n'))
     starting_procedure_steps.append(ManualGcode(text=';-----\n; START OF STARTING PROCEDURE\n;-----\n'))
     starting_procedure_steps.append(ManualGcode(text='M106 P2 S255 ; turn on exhaust fan'))
 
@@ -37,14 +31,13 @@ def set_up(user_overrides: dict):
 
     # Home all axes 
     starting_procedure_steps.append(PrinterCommand(id='home')) #good
+
+    # Fast home (may damage kapton tape on bed)
     #starting_procedure_steps.append(ManualGcode (text='G28 XY'))
     #starting_procedure_steps.append(ManualGcode (text='G28 Z'))
                                 
     starting_procedure_steps.append(PrinterCommand(id='absolute_coords'))
     starting_procedure_steps.append(PrinterCommand(id='units_mm'))
-
-    # Ultra One doesn't use relative extrusion - commented out
-    #starting_procedure_steps.append(Extruder(relative_gcode=initialization_data["relative_e"]))
 
     # Enable Tool 0 fan 
     starting_procedure_steps.append(ManualGcode(text='M106 P0 S255 ; turn on tool_0 part cooling fan'))    
@@ -64,10 +57,6 @@ def set_up(user_overrides: dict):
         text='M220 S' + str(initialization_data["print_speed_percent"])+' ; set speed factor override percentage'))
     starting_procedure_steps.append(ManualGcode(
         text='M221 D0 S' + str(initialization_data["material_flow_percent"])+' ; set extrude factor override percentage')) # D0 is for Tool_0
-    #starting_procedure_steps.append(Extruder(on=False))
-
-    # wiggle starting position
-    #starting_procedure_steps.append(Point(x=203, y=127, z=10))
     
     starting_procedure_steps.append(Printer(travel_speed=200))
     starting_procedure_steps.append(Printer(travel_speed=initialization_data["travel_speed"]))
@@ -81,21 +70,12 @@ def set_up(user_overrides: dict):
 
     #turn on for the purge script
     starting_procedure_steps.append(Extruder(on=True))    
-
     starting_procedure_steps.append(ManualGcode(text=';-----\n; END OF STARTING PROCEDURE\n;-----\n'))
 
-    # move the home command in the start procedure to be after temperatures (to work with bed levelling)
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    # commented this out, doing it in the starting procedure steps
-    #del starting_procedure_steps[1]
-    #starting_procedure_steps.insert(5, PrinterCommand(id='home'))
-    #tarting_procedure_steps.insert(6, GcodeComment(end_of_previous_line_text='; including mesh bed level'))
-
-
-
-
-
-    #ending scripts are all set 
     ending_procedure_steps = []
     ending_procedure_steps.append(ManualGcode(text='\n;-----\n; START OF ENDING PROCEDURE\n;-----'))
     ending_procedure_steps.append(ManualGcode(text='M106 P2 S0 ; turn off exhaust fan'))
