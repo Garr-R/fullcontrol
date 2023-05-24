@@ -39,24 +39,20 @@ def set_up(user_overrides: dict):
     starting_procedure_steps.append(PrinterCommand(id='absolute_coords'))
     starting_procedure_steps.append(PrinterCommand(id='units_mm'))
 
-    # Enable Tool 0 fan 
-    starting_procedure_steps.append(ManualGcode(text='M106 P0 S255 ; turn on tool_0 part cooling fan'))    
-    
-    # Enable Tool 1 fan - Not using Tool_1
-    #starting_procedure_steps.append(ManualGcode(text='M106 P1 S255 ; turn on part cooling fan'))
+    # ActivateTool 1
+    starting_procedure_steps.append(ManualGcode(text='T1 ; activate Tool 1'))
 
-    # Heat up Tool_0 hotend
-    starting_procedure_steps.append(ManualGcode (text='M104 P0 S' + str(initialization_data["nozzle_temp"])))
-    starting_procedure_steps.append(ManualGcode (text='M109 P0 S' + str(initialization_data["nozzle_temp"])))
+    # Enable Tool 1 fan
+    starting_procedure_steps.append(ManualGcode(text='M106 P1 S255 ; turn on part cooling fan'))
 
-    # Heat up Tool_1 hotend - Not using Tool_1
-    #starting_procedure_steps.append(ManualGcode (text='M104 P1 S' + str(initialization_data["nozzle_temp"])))
-    #starting_procedure_steps.append(ManualGcode (text='M109 P1 S' + str(initialization_data["nozzle_temp"])))
+    # Heat up Tool_1 hotend
+    starting_procedure_steps.append(ManualGcode (text='M104 P1 S' + str(initialization_data["nozzle_temp"])))
+    starting_procedure_steps.append(ManualGcode (text='M109 P1 S' + str(initialization_data["nozzle_temp"])))
 
     starting_procedure_steps.append(ManualGcode(
         text='M220 S' + str(initialization_data["print_speed_percent"])+' ; set speed factor override percentage'))
     starting_procedure_steps.append(ManualGcode(
-        text='M221 D0 S' + str(initialization_data["material_flow_percent"])+' ; set extrude factor override percentage')) # D0 is for Tool_0
+        text='M221 D1 S' + str(initialization_data["material_flow_percent"])+' ; set extrude factor override percentage'))
     
     starting_procedure_steps.append(Printer(travel_speed=200))
     starting_procedure_steps.append(Printer(travel_speed=initialization_data["travel_speed"]))
