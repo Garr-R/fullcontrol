@@ -3,6 +3,118 @@ import fullcontrol as fc
 from math import tau, sin
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~ Wiggle Test ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+def main():
+    # Define the printer profile:
+    # Ultra_one options:    ultra_one_T0_settings // ultra_one_T1_settings //
+    # M3 options:           m3_id_T0_settings // m3_id_T1_settings // m3_se_settings
+    # M2 options:           m2_settings
+    selected_printer = m2_settings 
+    
+    # Define the filament profile:
+    # PETG_filament_settings // ABS_filament_settings // ASA_filament_settings // TPU_filament_settings // NYLON_filament_settings
+    selected_filament = PLA_filament_settings 
+
+    # Define the nozzle profile:
+    # nozzle_0_25mm_settings // nozzle_0_35mm_settings // nozzle_0_50mm_settings // nozzle_0_75mm_settings
+    selected_nozzle = nozzle_0_35mm_settings 
+
+    # Define the printer to use (for the start/end gcode scripts and filename):
+    printer = selected_printer['printer'] 
+
+    # Filename without extension
+    filename = 'n2_0.35wiggle_test_' + printer
+
+    # Custom parameters for the wiggle test
+    print_settings = {
+        'primer': 'front_lines_then_xy',
+        'extrusion_width': selected_nozzle['nozzle_extrusion_width'],
+        'print_speed_percent': selected_filament['filament_print_speed_percent'],
+        'material_flow_percent': selected_filament['filament_material_flow_percent'],
+        'nozzle_temp': selected_filament['filament_hotend_temp'],
+        'bed_temp': selected_filament['filament_bed_temp'],
+        'fan_percent': selected_filament['filament_fan_percent'],
+        'travel_speed': 18000
+        }
+
+    # Used in the original (javascript) wiggle script:
+    #{% set xpos = parameters.wiggleX %}
+    #{% set ypos = parameters.wiggleY %}
+    #{% set zpos = parameters.wiggleHeight %}
+
+    # Wiggle starting height calibration parameters
+
+    # Center starting position TODO: verify if this is correct
+    Xaxis_pos = selected_printer['x_volume'] / 2 - 20
+    Yaxis_pos = selected_printer['y_volume'] / 2 - 20
+    Zaxis_pos = 0.2 # in the future maybe something like {% set zpos = parameters.wiggleHeight %}
+
+    Xaxis_movement = 20.0
+    Yaxis_movement = selected_nozzle['nozzle_Yaxis_movement']
+    Yaxis_movement_increment = selected_nozzle['nozzle_Yaxis_increment']
+
+    # total number of loops (22 zig-zag lines)
+    zig_zag_lines = 11
+
+
+    # Begin 
+    steps = []
+
+    # Move to starting position
+    steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos, color=[0, 1, 0]))
+
+    # Enable the extruder
+    steps.append(fc.Extruder(on=True))
+
+    # Loop through the zig-zag lines
+    for x in range(zig_zag_lines):
+
+        # Increment the Xaxis position
+        Xaxis_pos = Xaxis_pos + Xaxis_movement
+
+        # Move 1: 
+        steps.append(fc.Point(x=Xaxis_pos))
+
+        # Increment the Yaxis position and print to console for debugging
+        Yaxis_movement += Yaxis_movement_increment
+        Yaxis_pos = Yaxis_pos + Yaxis_movement
+        print("Loop: ", x + 1, " | new Yaxis_movement: ", Yaxis_movement.__round__(3))
+
+        # Move 2:
+        steps.append(fc.Extruder(on=False))
+        steps.append(fc.Point(y=Yaxis_pos, color=[1, 0, 0]))
+        steps.append(fc.Extruder(on=True))
+
+        # Increment the Xaxis position
+        Xaxis_pos = Xaxis_pos - Xaxis_movement
+
+        # Move 3:
+        steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos))
+
+        # Increment the Yaxis position and print to console for debugging
+        Yaxis_movement += Yaxis_movement_increment
+        Yaxis_pos = Yaxis_pos + Yaxis_movement
+        print("Loop: ", x + 1, " | new Yaxis_movement: ", Yaxis_movement.__round__(3))
+
+        # Move 4:
+        steps.append(fc.Extruder(on=False))
+        steps.append(fc.Point(y=Yaxis_pos, color=[0, 0, 1]))
+        steps.append(fc.Extruder(on=True))
+
+    # Extrude a little bit of filament at the end while moving Z
+    steps.append(fc.Point(z=15, color=[0, 1, 0]))
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~ Output options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # generate the gcode
+    fc.transform(steps, 'gcode', fc.GcodeControls(printer_name=printer, save_as=filename, initialization_data=print_settings))
+
+    # plot the steps
+    #fc.transform(steps, 'plot', fc.PlotControls(color_type='manual', zoom=4))
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~  Filament specific settings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PLA is nearly finished  :D
@@ -19,8 +131,8 @@ PETG_filament_settings = {
     'filament_hotend_temp': 245,
     'filament_bed_temp': 75,
     'filament_fan_percent': 100,
-    'filament_print_speed_percent': 100,
-    'filament_material_flow_percent': 100
+    'filament_print_speed_percent': 75,
+    'filament_material_flow_percent': 90
 }
 
 # ABS hasn't been tested
@@ -28,8 +140,8 @@ ABS_filament_settings = {
     'filament_hotend_temp': 250,
     'filament_bed_temp': 110,
     'filament_fan_percent': 0,
-    'filament_print_speed_percent': 100,
-    'filament_material_flow_percent': 100
+    'filament_print_speed_percent': 75,
+    'filament_material_flow_percent': 90
 }
 
 # Cheating because ASA is basically ABS
@@ -40,16 +152,17 @@ TPU_filament_settings = {
     'filament_hotend_temp': 250,
     'filament_bed_temp': 110,
     'filament_fan_percent': 0,
-    'filament_print_speed_percent': 100,
-    'filament_material_flow_percent': 100
+    'filament_print_speed_percent': 60,
+    'filament_material_flow_percent': 90
 }
+
 # NYLON hasn't been tested
 NYLON_filament_settings = {
     'filament_hotend_temp': 250,
     'filament_bed_temp': 110,
     'filament_fan_percent': 0,
-    'filament_print_speed_percent': 100,
-    'filament_material_flow_percent': 100
+    'filament_print_speed_percent': 75,
+    'filament_material_flow_percent': 90
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -60,16 +173,19 @@ nozzle_0_25mm_settings = {
     'nozzle_Yaxis_movement': 0.38, # not correct
     'nozzle_Yaxis_increment': 0.01 # not correct
 }
+
 nozzle_0_35mm_settings = {
     'nozzle_extrusion_width': 0.42,
     'nozzle_Yaxis_movement': 0.38,
     'nozzle_Yaxis_increment': 0.005
 }
+
 nozzle_0_50mm_settings = {
     'nozzle_extrusion_width': 0.6,
     'nozzle_Yaxis_movement': 0.42, # maybe correct?
     'nozzle_Yaxis_increment': 0.006 # maybe correct?
 }
+
 nozzle_0_75mm_settings = {
     'nozzle_extrusion_width': 0.84,
     'nozzle_Yaxis_movement': 0.38, # not correct
@@ -79,141 +195,40 @@ nozzle_0_75mm_settings = {
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~ Printer specific settings (used for the bed size) ~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ultra_one_settings = {
-    'printer': 't0_ultra_one',
+ultra_one_T0_settings = {
+    'printer': 'ultra_one_T0',
     'x_volume': 406,
     'y_volume': 355
 }
-m3_id_rev0_settings = {
-    'printer': 'm3_id_rev0',
+ultra_one_T1_settings = {
+    'printer': 'ultra_one_T1',
+    'x_volume': 406,
+    'y_volume': 355
+}
+m3_id_T0_settings = {
+    'printer': 'makergear_m3_id_T0',
     'x_volume': 200,
     'y_volume': 255
 }
-m3_id_rev1_settings = {
-    'printer': 'm3_id_rev1',
+m3_id_T1_settings = {
+    'printer': 'makergear_m3_id_T1',
     'x_volume': 200,
     'y_volume': 255
 }
-m3_se_rev0_settings = {
-    'printer': 'm3_se_rev0',
-    'x_volume': 200,
-    'y_volume': 255
-}
-m3_se_rev1_settings = {
-    'printer': 'm3_se_rev1',
+m3_se_settings = {
+    'printer': 'makergear_m3_se',
     'x_volume': 200,
     'y_volume': 255
 }
 m2_settings = {
-    'printer': 'm2',
+    'printer': 'makergear_m2',
     'x_volume': 200,
     'y_volume': 255
 }
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~ Wiggle Test ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+#~~  Main ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-def main():
-
-    # Define the filament and nozzle settings to use:
-    selected_printer = m2_settings # ultra_one_settings / m3_id_rev0_settings / m3_id_rev1_settings / m3_se_rev0_settings / m3_se_rev1_settings / m2_settings
-    selected_filament = PLA_filament_settings # PETG_filament_settings / ABS_filament_settings / ASA_filament_settings / TPU_filament_settings / NYLON_filament_settings
-    selected_nozzle = nozzle_0_35mm_settings # nozzle_0_25mm_settings / nozzle_0_35mm_settings / nozzle_0_50mm_settings / nozzle_0_75mm_settings
-
-    # Define the printer to use (for the start and end gcode scripts):
-    printer = selected_printer['printer'] 
-
-    # Filename without extension
-    filename = 'n2_0.35wiggle_test_' + printer
-
-    # Custom parameters for the wiggle test
-    print_settings = {
-        'primer': 'front_lines_then_xy',
-        'extrusion_width': selected_nozzle['nozzle_extrusion_width'],
-        'print_speed_percent': selected_filament['filament_print_speed_percent'],
-        'material_flow_percent': selected_filament['filament_material_flow_percent'],
-        'nozzle_temp': selected_filament['filament_hotend_temp'],
-        'bed_temp': selected_filament['filament_bed_temp'],
-        'fan_percent': selected_filament['filament_fan_percent'],
-        'travel_speed': 18000 # Does this work for the M2 / M3 printers?
-        }
-
-    # Used in the original (javascript) wiggle script:
-    #{% set xpos = parameters.wiggleX %}
-    #{% set ypos = parameters.wiggleY %}
-    #{% set zpos = parameters.wiggleHeight %}
-
-    # Wiggle parameters
-
-    # Center starting position
-    Xaxis_pos = selected_printer['x_volume'] / 2 - 20
-    Yaxis_pos = selected_printer['y_volume'] / 2 - 20
-    Zaxis_pos = 0.2
-
-    Xaxis_movement = 20.0
-    Yaxis_movement = selected_nozzle['nozzle_Yaxis_movement']
-    Yaxis_movement_increment = selected_nozzle['nozzle_Yaxis_increment']
-
-    # total number of loops (22 zig-zag lines)
-    zig_zag_lines = 11
-    steps = []
-    # Move to starting position
-    steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos, color=[0, 1, 0]))
-
-    # Enable the extruder
-    steps.append(fc.Extruder(on=True))
-
-    # Loop through the zig-zag lines
-    for x in range(zig_zag_lines):
-        # Increment the Xaxis position
-        Xaxis_pos = Xaxis_pos + Xaxis_movement
-        print("loop: ", x)
-        #print('new Xaxis_pos: ', Xaxis_pos)
-
-        # Move 1
-        steps.append(fc.Point(x=Xaxis_pos))
-
-        # Increment the Yaxis position
-        
-        Yaxis_movement += Yaxis_movement_increment
-        Yaxis_pos = Yaxis_pos + Yaxis_movement
-        print('new Yaxis_movement: ', Yaxis_movement.__round__(3))
-
-        # Move 2
-        steps.append(fc.Extruder(on=False))
-        steps.append(fc.Point(y=Yaxis_pos, color=[1, 0, 0]))
-        steps.append(fc.Extruder(on=True))
-
-        # Increment the Xaxis position
-        Xaxis_pos = Xaxis_pos - Xaxis_movement
-        print('new Xaxis_pos: ', Xaxis_pos)
-
-        # Move 3
-        steps.append(fc.Point(x=Xaxis_pos, y=Yaxis_pos, z=Zaxis_pos))
-        #print("loop: ", x)
-
-        # Increment the Yaxis position
-        Yaxis_movement += Yaxis_movement_increment
-        Yaxis_pos = Yaxis_pos + Yaxis_movement
-        print('new Yaxis_movement: ', Yaxis_movement.__round__(3))
-
-        # Move 4
-        steps.append(fc.Extruder(on=False))
-        steps.append(fc.Point(y=Yaxis_pos, color=[0, 0, 1]))
-        steps.append(fc.Extruder(on=True))
-
-    steps.append(fc.Point(z=10, color=[0, 1, 0]))
-
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~ Output options ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    # generate the gcode
-    fc.transform(steps, 'gcode', fc.GcodeControls(printer_name=printer, save_as=filename, initialization_data=print_settings))
-
-    # plot the steps
-    #fc.transform(steps, 'plot', fc.PlotControls(color_type='manual', zoom=4))
-
-
 if __name__ == "__main__":
     """ This is executed when run from the command line """
     main()

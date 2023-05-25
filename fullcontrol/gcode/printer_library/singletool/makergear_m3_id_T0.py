@@ -1,27 +1,26 @@
 from fullcontrol.gcode import Point, Printer, Extruder, ManualGcode, PrinterCommand, Buildplate, Hotend, Fan, StationaryExtrusion
 import fullcontrol.gcode.printer_library.singletool.base_settings as base_settings
 
-
 def set_up(user_overrides: dict):
-    ''' DO THIS
-    '''
-
     # overrides for this specific printer relative those defined in base_settings.py
-    printer_overrides = {'primer': 'front_lines_then_xy',
-                         'extrusion_width': 0.42,
-                         'nozzle_temp': 215,
-                         'bed_temp': 60,
-                         'travel_speed': 12000,
-                         }
+    printer_overrides = {
+        'primer': 'front_lines_then_xy',
+        'extrusion_width': 0.42,
+        'nozzle_temp': 215,
+        'bed_temp': 60,
+        'travel_speed': 12000,
+        }
+    
     # update default initialization settings with printer-specific overrides and user-defined overrides
     initialization_data = {**base_settings.default_initial_settings, **printer_overrides}
     initialization_data = {**initialization_data, **user_overrides}
 
     starting_procedure_steps = []
     starting_procedure_steps.append(ManualGcode(text='; Time to print!!!!!\n; GCode created with FullControl'))
-    
+    starting_procedure_steps.append(ManualGcode(text=';-----\n; START OF STARTING PROCEDURE\n;-----\n'))
+
     # Heat up the bed
-    starting_procedure_steps.append(Buildplate(temp=initialization_data["bed_temp"], wait=False))
+    starting_procedure_steps.append(Buildplate(temp=initialization_data["bed_temp"], wait=True))
 
     # Home axes
     starting_procedure_steps.append(PrinterCommand(id='home'))
@@ -35,8 +34,7 @@ def set_up(user_overrides: dict):
     # Turn on part cooling fan
     starting_procedure_steps.append(Fan(speed_percent=initialization_data["fan_percent"]))
 
-    # Wait for bed and nozzle to heat up
-    starting_procedure_steps.append(Buildplate(temp=initialization_data["bed_temp"], wait=True))
+    # Wait for the nozzle to heat up
     starting_procedure_steps.append(Hotend(temp=initialization_data["nozzle_temp"], wait=True))
 
     # I don't know if the M2 can use this yet

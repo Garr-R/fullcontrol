@@ -12,12 +12,15 @@ def set_up(user_overrides: dict):
         'bed_temp': 60,
         'travel_speed': 18000
     }
+    
     # update default initialization settings with printer-specific overrides and user-defined overrides
     initialization_data = {**base_settings.default_initial_settings, **printer_overrides}
     initialization_data = {**initialization_data, **user_overrides}
 
     starting_procedure_steps = []
+    starting_procedure_steps.append(ManualGcode(text='; Time to print!!!!!\n; GCode created with FullControl'))
     starting_procedure_steps.append(ManualGcode(text=';-----\n; START OF STARTING PROCEDURE\n;-----\n'))
+    
     starting_procedure_steps.append(ManualGcode(text='M106 P2 S255 ; turn on exhaust fan'))
 
     # Manually set Ultra One Rev.0 / Rev.1 bed temperature
@@ -39,17 +42,20 @@ def set_up(user_overrides: dict):
     starting_procedure_steps.append(PrinterCommand(id='absolute_coords'))
     starting_procedure_steps.append(PrinterCommand(id='units_mm'))
 
-    # Enable Tool 0 fan 
-    starting_procedure_steps.append(ManualGcode(text='M106 P0 S255 ; turn on tool_0 part cooling fan'))    
+    # Activate Tool 1
+    starting_procedure_steps.append(ManualGcode(text='T1 ; activate Tool 1'))
 
-    # Heat up Tool_0 hotend
-    starting_procedure_steps.append(ManualGcode (text='M104 P0 S' + str(initialization_data["nozzle_temp"])))
-    starting_procedure_steps.append(ManualGcode (text='M109 P0 S' + str(initialization_data["nozzle_temp"])))
+    # Enable Tool 1 fan
+    starting_procedure_steps.append(ManualGcode(text='M106 P1 S' + str(initialization_data["fan_percent"]) + ' ; turn on tool_0 part cooling fan'))    
+
+    # Heat up Tool_1 hotend
+    starting_procedure_steps.append(ManualGcode (text='M104 P1 S' + str(initialization_data["nozzle_temp"])))
+    starting_procedure_steps.append(ManualGcode (text='M109 P1 S' + str(initialization_data["nozzle_temp"])))
 
     starting_procedure_steps.append(ManualGcode(
         text='M220 S' + str(initialization_data["print_speed_percent"])+' ; set speed factor override percentage'))
     starting_procedure_steps.append(ManualGcode(
-        text='M221 D0 S' + str(initialization_data["material_flow_percent"])+' ; set extrude factor override percentage'))
+        text='M221 D1 S' + str(initialization_data["material_flow_percent"])+' ; set extrude factor override percentage'))
     
     starting_procedure_steps.append(Printer(travel_speed=200))
     starting_procedure_steps.append(Printer(travel_speed=initialization_data["travel_speed"]))
