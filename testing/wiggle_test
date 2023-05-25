@@ -7,14 +7,14 @@ from math import tau, sin
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 def main():
     # Define the printer profile:
-    # Ultra_one options:    ultra_one_T0_settings // ultra_one_T1_settings //
+    # Ultra One options:    ultra_one_T0_settings // ultra_one_T1_settings
     # M3 options:           m3_id_T0_settings // m3_id_T1_settings // m3_se_settings
     # M2 options:           m2_settings
-    selected_printer = m2_settings 
+    selected_printer = m2_settings
     
     # Define the filament profile:
-    # PETG_filament_settings // ABS_filament_settings // ASA_filament_settings // TPU_filament_settings // NYLON_filament_settings
-    selected_filament = PLA_filament_settings 
+    # PETG_filament_settings // ABS_filament_settings // ASA_filament_settings // TPU_filament_settings // NYLON_filament_settings // PLA_filament_settings // PVA_filament_settings
+    selected_filament = PETG_filament_settings 
 
     # Define the nozzle profile:
     # nozzle_0_25mm_settings // nozzle_0_35mm_settings // nozzle_0_50mm_settings // nozzle_0_75mm_settings
@@ -24,11 +24,11 @@ def main():
     printer = selected_printer['printer'] 
 
     # Filename without extension
-    filename = 'n2_0.35wiggle_test_' + printer
+    filename = '9_wiggle_test_' + printer + '_' + str(selected_nozzle['nozzle_name']) + '_' + str(selected_filament['filament_name'])
 
     # Custom parameters for the wiggle test
     print_settings = {
-        'primer': 'front_lines_then_xy',
+        'primer': 'front_lines_then_xy', # or 'no_primer' when using the maintenance procedure to prime the nozzle
         'extrusion_width': selected_nozzle['nozzle_extrusion_width'],
         'print_speed_percent': selected_filament['filament_print_speed_percent'],
         'material_flow_percent': selected_filament['filament_material_flow_percent'],
@@ -55,7 +55,7 @@ def main():
     Yaxis_movement_increment = selected_nozzle['nozzle_Yaxis_increment']
 
     # total number of loops (22 zig-zag lines)
-    zig_zag_lines = 11
+    zig_zag_lines = 9
 
 
     # Begin 
@@ -81,7 +81,7 @@ def main():
         Yaxis_pos = Yaxis_pos + Yaxis_movement
         print("Loop: ", x + 1, " | new Yaxis_movement: ", Yaxis_movement.__round__(3))
 
-        # Move 2:
+        # Move 2: Disable the extruder when moving Y
         steps.append(fc.Extruder(on=False))
         steps.append(fc.Point(y=Yaxis_pos, color=[1, 0, 0]))
         steps.append(fc.Extruder(on=True))
@@ -97,7 +97,7 @@ def main():
         Yaxis_pos = Yaxis_pos + Yaxis_movement
         print("Loop: ", x + 1, " | new Yaxis_movement: ", Yaxis_movement.__round__(3))
 
-        # Move 4:
+        # Move 4: Disable the extruder when moving Y
         steps.append(fc.Extruder(on=False))
         steps.append(fc.Point(y=Yaxis_pos, color=[0, 0, 1]))
         steps.append(fc.Extruder(on=True))
@@ -119,6 +119,7 @@ def main():
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # PLA is nearly finished  :D
 PLA_filament_settings = {
+    'filament_name': 'PLA',
     'filament_hotend_temp': 215,
     'filament_bed_temp': 60,
     'filament_fan_percent': 100,
@@ -128,6 +129,7 @@ PLA_filament_settings = {
 
 # PETG hasn't been tested
 PETG_filament_settings = {
+    'filament_name': 'PETG',
     'filament_hotend_temp': 245,
     'filament_bed_temp': 75,
     'filament_fan_percent': 100,
@@ -137,6 +139,7 @@ PETG_filament_settings = {
 
 # ABS hasn't been tested
 ABS_filament_settings = {
+    'filament_name': 'ABS',
     'filament_hotend_temp': 250,
     'filament_bed_temp': 110,
     'filament_fan_percent': 0,
@@ -144,11 +147,19 @@ ABS_filament_settings = {
     'filament_material_flow_percent': 90
 }
 
-# Cheating because ASA is basically ABS
-ASA_filament_settings = ABS_filament_settings
+# ASA hasn't been tested
+ASA_filament_settings = {
+    'filament_name': 'ASA',
+    'filament_hotend_temp': 250,
+    'filament_bed_temp': 110,
+    'filament_fan_percent': 0,
+    'filament_print_speed_percent': 75,
+    'filament_material_flow_percent': 90
+}
 
 # TPU hasn't been tested
 TPU_filament_settings = {
+    'filament_name': 'TPU',
     'filament_hotend_temp': 250,
     'filament_bed_temp': 110,
     'filament_fan_percent': 0,
@@ -158,9 +169,40 @@ TPU_filament_settings = {
 
 # NYLON hasn't been tested
 NYLON_filament_settings = {
+    'filament_name': 'NYLON',
     'filament_hotend_temp': 250,
     'filament_bed_temp': 110,
     'filament_fan_percent': 0,
+    'filament_print_speed_percent': 75,
+    'filament_material_flow_percent': 90
+}
+
+# Cheating because POLYSUPPORT uses PLA settings
+POLYSUPPORT_filament_settings = {
+    'filament_name': 'POLYSUPPORT',
+    'filament_hotend_temp': 215,
+    'filament_bed_temp': 60,
+    'filament_fan_percent': 100,
+    'filament_print_speed_percent': 75,
+    'filament_material_flow_percent': 90
+}
+
+# PVA hasn't been tested
+PVA_filament_settings = {
+    'filament_name': 'PVA',
+    'filament_hotend_temp': 215,
+    'filament_bed_temp': 60,
+    'filament_fan_percent': 100,
+    'filament_print_speed_percent': 75,
+    'filament_material_flow_percent': 90
+}
+
+# PC hasn't been tested
+PC_filament_settings = {
+    'filament_name': 'PC',
+    'filament_hotend_temp': 215,
+    'filament_bed_temp': 60,
+    'filament_fan_percent': 100,
     'filament_print_speed_percent': 75,
     'filament_material_flow_percent': 90
 }
@@ -169,24 +211,28 @@ NYLON_filament_settings = {
 #~~  Nozzle specific settings ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nozzle_0_25mm_settings = {
+    'nozzle_name': '0.25mm',
     'nozzle_extrusion_width': 0.3,
     'nozzle_Yaxis_movement': 0.38, # not correct
     'nozzle_Yaxis_increment': 0.01 # not correct
 }
 
 nozzle_0_35mm_settings = {
-    'nozzle_extrusion_width': 0.42,
-    'nozzle_Yaxis_movement': 0.38,
-    'nozzle_Yaxis_increment': 0.005
+    'nozzle_name': '0.35mm',
+    'nozzle_extrusion_width': 0.42, # Default extrusion width for 0.35mm nozzle
+    'nozzle_Yaxis_movement': 0.38,  # correct (tested with PLA)
+    'nozzle_Yaxis_increment': 0.01  # verified with PLA, it's too close for PETG
 }
 
 nozzle_0_50mm_settings = {
-    'nozzle_extrusion_width': 0.6,
-    'nozzle_Yaxis_movement': 0.42, # maybe correct?
-    'nozzle_Yaxis_increment': 0.006 # maybe correct?
+    'nozzle_name': '0.50mm',
+    'nozzle_extrusion_width': 0.6, # Default extrusion width for 0.5mm nozzle
+    'nozzle_Yaxis_movement': 0.42, # correct (tested with PLA)
+    'nozzle_Yaxis_increment': 0.02 # correct (tested with PLA)
 }
 
 nozzle_0_75mm_settings = {
+    'nozzle_name': '0.75mm',
     'nozzle_extrusion_width': 0.84,
     'nozzle_Yaxis_movement': 0.38, # not correct
     'nozzle_Yaxis_increment': 0.66 # not correct
@@ -196,12 +242,12 @@ nozzle_0_75mm_settings = {
 #~~ Printer specific settings (used for the bed size) ~~~~~~~~~~~~~~~~~~~~~
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ultra_one_T0_settings = {
-    'printer': 'ultra_one_T0',
+    'printer': 'makergear_ultra_one_T0',
     'x_volume': 406,
     'y_volume': 355
 }
 ultra_one_T1_settings = {
-    'printer': 'ultra_one_T1',
+    'printer': 'makergear_ultra_one_T1',
     'x_volume': 406,
     'y_volume': 355
 }
